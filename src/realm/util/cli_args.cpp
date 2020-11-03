@@ -14,9 +14,8 @@ CliArgumentParser::ParseResult CliArgumentParser::parse(int argc, const char** a
                 return false;
             }
             auto flag_name = flag->name();
-            if (cur_arg[1] == '-' &&
-                    cur_arg.size() >= flag_name.size() + 2 &&
-                    cur_arg.substr(2, flag_name.size()) == flag_name) {
+            if (cur_arg[1] == '-' && cur_arg.size() >= flag_name.size() + 2 &&
+                cur_arg.substr(2, flag_name.size()) == flag_name) {
                 return true;
             }
             if (cur_arg[1] == flag->short_name() && cur_arg.size() == 2) {
@@ -50,7 +49,7 @@ CliArgumentParser::ParseResult CliArgumentParser::parse(int argc, const char** a
     return result;
 }
 
-void CliArgumentParser::add_argument(CliFlag *flag)
+void CliArgumentParser::add_argument(CliFlag* flag)
 {
     m_flags.push_back(flag);
 }

@@ -11,7 +11,7 @@ class CliFlag;
 class CliArgumentParser {
 public:
     void add_argument(CliFlag* flag);
-    
+
     struct ParseResult {
         StringView program_name;
         std::vector<StringView> unmatched_arguments;

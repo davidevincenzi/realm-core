@@ -335,7 +335,8 @@ void print_usage(StringView program_name)
                  "                       and IDENT messages to apply to the realm state\n"
                  "  --verbose            Print all messages including trace messages to stderr\n"
                  "  -v, --version        Show the version of the Realm Sync release that this\n"
-                 "                       command belongs to." << std::endl;
+                 "                       command belongs to."
+              << std::endl;
 }
 
 int main(int argc, const char** argv)
