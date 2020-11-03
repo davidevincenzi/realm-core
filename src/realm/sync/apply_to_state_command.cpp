@@ -97,8 +97,7 @@ std::pair<StringView, bool> parse_header_value(StringView sv, StringView& cur_ar
     auto sub_str_len = std::distance(sv.begin(), delim_at);
     cur_arg = StringView(sv.begin(), sub_str_len);
 
-    sv.remove_prefix(sub_str_len);
-    return {sv, true};
+    return {sv.substr(sub_str_len), true};
 }
 
 template <typename T, typename... Args>
@@ -117,8 +116,7 @@ std::pair<StringView, bool> parse_header_element(StringView sv, char end_delim, 
         return parse_header_element(sv.substr(1), end_delim, next_args...);
     }
     if (sv.front() == end_delim) {
-        sv.remove_prefix(1);
-        return {sv, true};
+        return {sv.substr(1), true};
     }
     return {StringView{}, false};
 }
@@ -262,7 +260,7 @@ std::optional<std::pair<DownloadMessage, StringView>> DownloadMessage::parse(Str
         realm::BinaryData changeset_data{body_view.data(), changeset_size};
         cur_changeset.data = changeset_data;
         ret.changesets.push_back(cur_changeset);
-        body_view.remove_prefix(changeset_size);
+        body_view = body_view.substr(changeset_size);
     }
 
     return std::make_pair(std::move(ret), sv);
@@ -315,21 +313,40 @@ std::optional<std::pair<UploadMessage, StringView>> UploadMessage::parse(StringV
         }
         logger->trace("Decoded changeset: %1", cur_changeset);
         ret.changesets.push_back(std::move(cur_changeset));
-        body_view.remove_prefix(changeset_size);
+        body_view = body_view.substr(changeset_size);
     }
 
     return std::make_pair(std::move(ret), sv);
 }
 
-int main(int argc, char** argv)
+void print_usage(StringView program_name)
 {
-    CliFlag help_arg("help", 'h');
-    CliArgument realm_arg("realm", 'r');
-    CliArgument encryption_key_arg("encryption-key", 'e');
-    CliArgument input_arg("input", 'i');
-    CliFlag verbose_arg("verbose");
-    auto arg_results =
-        parse_arguments(argc, argv, {&help_arg, &realm_arg, &encryption_key_arg, &input_arg, &verbose_arg});
+    std::cout << "Synopsis: " << program_name << " -r <PATH-TO-REALM> -i <PATH-TO-MESSAGES> [OPTIONS]"
+              << "\n"
+                 "Options:\n"
+                 "  -h, --help           Display command-line synopsis followed by the list of\n"
+                 "                       available options.\n"
+                 "  -e, --encryption-key  The file-system path of a file containing a 64-byte\n"
+                 "                       encryption key to be used for accessing the specified\n"
+                 "                       Realm file.\n"
+                 "  -r, --realm          The file-system path to the realm to be created and/or have\n"
+                 "                       state applied to.\n"
+                 "  -i, --input          The file-system path a file containing UPLOAD, DOWNLOAD,\n"
+                 "                       and IDENT messages to apply to the realm state\n"
+                 "  --verbose            Print all messages including trace messages to stderr\n"
+                 "  -v, --version        Show the version of the Realm Sync release that this\n"
+                 "                       command belongs to." << std::endl;
+}
+
+int main(int argc, const char** argv)
+{
+    CliArgumentParser arg_parser;
+    CliFlag help_arg(arg_parser, "help", 'h');
+    CliArgument realm_arg(arg_parser, "realm", 'r');
+    CliArgument encryption_key_arg(arg_parser, "encryption-key", 'e');
+    CliArgument input_arg(arg_parser, "input", 'i');
+    CliFlag verbose_arg(arg_parser, "verbose");
+    auto arg_results = arg_parser.parse(argc, argv);
 
     std::unique_ptr<RootLogger> logger = std::make_unique<StderrLogger>(); // Throws
     if (verbose_arg) {
@@ -340,30 +357,18 @@ int main(int argc, char** argv)
     }
 
     if (help_arg) {
-        std::cout << "Synopsis: " << arg_results.program_name
-                  << "\n"
-                     "Options:\n"
-                     "  -h, --help           Display command-line synopsis followed by the list of\n"
-                     "                       available options.\n"
-                     "  -e, --encryption-key  The file-system path of a file containing a 64-byte\n"
-                     "                       encryption key to be used for accessing the specified\n"
-                     "                       Realm file.\n"
-                     "  -r, --realm          The file-system path to the realm to be created and/or have\n"
-                     "                       state applied to.\n"
-                     "  -i, --input          The file-system path a file containing UPLOAD, DOWNLOAD,\n"
-                     "                       and IDENT messages to apply to the realm state\n"
-                     "  --verbose            Print all messages including trace messages to stderr\n"
-                     "  -v, --version        Show the version of the Realm Sync release that this\n"
-                     "                       command belongs to.\n";
+        print_usage(arg_results.program_name);
         return EXIT_SUCCESS;
     }
 
     if (!realm_arg) {
         logger->error("missing path to realm to apply changesets to");
+        print_usage(arg_results.program_name);
         return EXIT_FAILURE;
     }
     if (!input_arg) {
         logger->error("missing path to messages to apply to realm");
+        print_usage(arg_results.program_name);
         return EXIT_FAILURE;
     }
     auto realm_path = realm_arg.as<std::string>();

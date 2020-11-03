@@ -59,14 +59,6 @@ public:
     size_type size() const noexcept;
     bool empty() const noexcept;
 
-    bool starts_with(char ch) const noexcept;
-    bool ends_with(char ch) const noexcept;
-    bool starts_with(BasicStringView<C, T> prefix) const noexcept;
-    bool ends_with(BasicStringView<C, T> suffix) const noexcept;
-
-    void remove_prefix(size_type n);
-    void remove_suffix(size_type n);
-
     BasicStringView substr(size_type i = 0, size_type n = npos) const;
     int compare(BasicStringView other) const noexcept;
     size_type find(BasicStringView<C, T>, size_type i = 0) const noexcept;
@@ -262,60 +254,6 @@ inline BasicStringView<C, T> BasicStringView<C, T>::substr(size_type i, size_typ
         return BasicStringView{m_data + i, m};
     }
     throw std::out_of_range("index");
-}
-
-template <class C, class T>
-inline bool BasicStringView<C, T>::starts_with(BasicStringView<C, T> prefix) const noexcept
-{
-    const auto our_size = size();
-    const auto prefix_size = prefix.size();
-    if (our_size < prefix_size) {
-        return false;
-    }
-
-    return substr(0, prefix_size) == prefix;
-}
-
-template <class C, class T>
-inline bool BasicStringView<C, T>::ends_with(BasicStringView<C, T> suffix) const noexcept
-{
-    const auto our_size = size();
-    const auto suffix_size = suffix.size();
-    if (suffix_size > our_size) {
-        return false;
-    }
-
-    return substr(our_size - suffix_size) == suffix;
-}
-
-template <class C, class T>
-inline bool BasicStringView<C, T>::starts_with(char ch) const noexcept
-{
-    return (!empty()) && (front() == ch);
-}
-
-template <class C, class T>
-inline bool BasicStringView<C, T>::ends_with(char ch) const noexcept
-{
-    return (!empty()) && (back() == ch);
-}
-
-template <class C, class T>
-inline void BasicStringView<C, T>::remove_prefix(size_type n)
-{
-    if (n > size()) {
-        throw std::out_of_range("tried to remove a prefix larger than the size of a string_view");
-    }
-    m_data += n;
-}
-
-template <class C, class T>
-inline void BasicStringView<C, T>::remove_suffix(size_type n)
-{
-    if (n > size()) {
-        throw std::out_of_range("tried to remove a suffix larger than the size of a string_view");
-    }
-    m_size -= n;
 }
 
 template <class C, class T>

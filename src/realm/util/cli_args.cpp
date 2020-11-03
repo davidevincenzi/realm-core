@@ -2,28 +2,29 @@
 
 namespace realm::util {
 
-CliParseResult parse_arguments(int argc, char** argv, std::initializer_list<CliFlag*> to_parse)
+CliArgumentParser::ParseResult CliArgumentParser::parse(int argc, const char** argv)
 {
-    CliParseResult result;
+    ParseResult result;
     result.program_name = argv[0];
     for (int i = 1; i < argc; ++i) {
         StringView cur_arg(argv[i]);
 
-        auto it = std::find_if(to_parse.begin(), to_parse.end(), [&](const CliFlag* flag) {
-            if (cur_arg.starts_with('-')) {
-                cur_arg.remove_prefix(1);
-                if (cur_arg.starts_with('-')) {
-                    if (cur_arg.substr(1) == flag->name()) {
-                        return true;
-                    }
-                }
-                if (cur_arg.size() == 2 && cur_arg[1] == flag->short_name()) {
-                    return true;
-                }
+        auto it = std::find_if(m_flags.begin(), m_flags.end(), [&](const auto& flag) {
+            if (cur_arg.size() < 2 || cur_arg.front() != '-') {
+                return false;
+            }
+            auto flag_name = flag->name();
+            if (cur_arg[1] == '-' &&
+                    cur_arg.size() >= flag_name.size() + 2 &&
+                    cur_arg.substr(2, flag_name.size()) == flag_name) {
+                return true;
+            }
+            if (cur_arg[1] == flag->short_name() && cur_arg.size() == 2) {
+                return true;
             }
             return false;
         });
-        if (it == to_parse.end()) {
+        if (it == m_flags.end()) {
             result.unmatched_arguments.push_back(cur_arg);
             continue;
         }
@@ -47,6 +48,11 @@ CliParseResult parse_arguments(int argc, char** argv, std::initializer_list<CliF
     }
 
     return result;
+}
+
+void CliArgumentParser::add_argument(CliFlag *flag)
+{
+    m_flags.push_back(flag);
 }
 
 template <>

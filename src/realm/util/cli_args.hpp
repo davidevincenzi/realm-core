@@ -7,17 +7,29 @@
 
 namespace realm::util {
 
-struct CliParseResult {
-    StringView program_name;
-    std::vector<StringView> unmatched_arguments;
+class CliFlag;
+class CliArgumentParser {
+public:
+    void add_argument(CliFlag* flag);
+    
+    struct ParseResult {
+        StringView program_name;
+        std::vector<StringView> unmatched_arguments;
+    };
+
+    ParseResult parse(int argc, const char** argv);
+
+private:
+    std::vector<CliFlag*> m_flags;
 };
 
 class CliFlag {
 public:
-    explicit CliFlag(StringView name, char short_name = '\0')
+    explicit CliFlag(CliArgumentParser& parser, StringView name, char short_name = '\0')
         : m_name(name)
         , m_short_name(short_name)
     {
+        parser.add_argument(this);
     }
 
     operator bool() const noexcept
@@ -35,7 +47,7 @@ public:
     }
 
 protected:
-    friend CliParseResult parse_arguments(int argc, char** argv, std::initializer_list<CliFlag*> to_parse);
+    friend class CliArgumentParser;
 
     virtual void assign(StringView)
     {
@@ -66,7 +78,7 @@ public:
     T as() const;
 
 protected:
-    friend CliParseResult parse_arguments(int argc, char** argv, std::initializer_list<const CliFlag*> to_parse);
+    friend class CliArgumentParser;
 
     void assign(StringView value) override
     {
@@ -86,8 +98,6 @@ private:
 class CliParseException : public std::runtime_error {
     using std::runtime_error::runtime_error;
 };
-
-CliParseResult parse_arguments(int argc, char** argv, std::initializer_list<CliFlag*> to_parse);
 
 } // namespace realm::util
 
