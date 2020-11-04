@@ -264,6 +264,7 @@ if(REALM_BUILD_COMMANDLINE_TOOLS)
         DumpCommand
         # StatCommand
         # HistCommand
+        ApplyToStateCommand
         VerifyServerFileCommand
         ServerIndexCommand
         COMPONENT runtime
