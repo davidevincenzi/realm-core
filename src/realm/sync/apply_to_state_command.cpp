@@ -1,8 +1,6 @@
 #include <algorithm>
 #include <cinttypes>
-#include <iostream>
 #include <string>
-#include <string_view>
 #include <type_traits>
 
 #include <external/mpark/variant.hpp>
@@ -20,7 +18,6 @@
 #include "realm/util/load_file.hpp"
 #include "realm/util/safe_int_ops.hpp"
 #include "realm/util/string_view.hpp"
-#include "realm/util/terminate.hpp"
 
 using namespace realm::util;
 
