@@ -4,7 +4,8 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-#include <variant>
+
+#include <external/mpark/variant.hpp>
 
 #include "realm/db.hpp"
 #include "realm/sync/history.hpp"
@@ -56,7 +57,7 @@ struct UploadMessage {
     static ParseResult<UploadMessage> parse(StringView sv, Logger* logger);
 };
 
-using Message = std::variant<ServerIdentMessage, DownloadMessage, UploadMessage>;
+using Message = mpark::variant<ServerIdentMessage, DownloadMessage, UploadMessage>;
 
 struct MessageParseException : public std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -379,8 +380,8 @@ int main(int argc, const char** argv)
         }
 
         input_view = message.second;
-        if (std::holds_alternative<DownloadMessage>(message.first)) {
-            const auto& download_message = std::get<DownloadMessage>(message.first);
+        if (mpark::holds_alternative<DownloadMessage>(message.first)) {
+            const auto& download_message = mpark::get<DownloadMessage>(message.first);
 
             realm::sync::VersionInfo version_info;
             realm::sync::ClientReplication::IntegrationError integration_error;
@@ -388,8 +389,8 @@ int main(int argc, const char** argv)
                 download_message.progress, &download_message.downloadable_bytes, download_message.changesets.data(),
                 download_message.changesets.size(), version_info, integration_error, *logger, nullptr);
         }
-        if (std::holds_alternative<UploadMessage>(message.first)) {
-            const auto& upload_message = std::get<UploadMessage>(message.first);
+        if (mpark::holds_alternative<UploadMessage>(message.first)) {
+            const auto& upload_message = mpark::get<UploadMessage>(message.first);
 
             for (const auto& changeset : upload_message.changesets) {
                 auto transaction = localDB->start_write();
@@ -399,8 +400,8 @@ int main(int argc, const char** argv)
                 logger->debug("integrated local changesets as version %1", generated_version);
             }
         }
-        if (std::holds_alternative<ServerIdentMessage>(message.first)) {
-            const auto& ident_message = std::get<ServerIdentMessage>(message.first);
+        if (mpark::holds_alternative<ServerIdentMessage>(message.first)) {
+            const auto& ident_message = mpark::get<ServerIdentMessage>(message.first);
             history.set_client_file_ident(ident_message.file_ident, true);
         }
     }
